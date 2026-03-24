@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/sse";
 
 /**
  * DELETE /api/sessions/cleanup
@@ -12,5 +13,6 @@ export async function DELETE() {
     },
   });
 
+  notify();
   return NextResponse.json({ deleted: result.count });
 }

@@ -1,15 +1,27 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaNeon } from "@prisma/adapter-neon";
-import { WebSocket } from "ws";
-import { neonConfig } from "@neondatabase/serverless";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-neonConfig.webSocketConstructor = WebSocket;
+function isNeonUrl(url: string) {
+  return url.includes("neon.tech");
+}
 
-const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
-const prisma = new PrismaClient({ adapter });
+function createPrismaClient() {
+  const url = process.env.DATABASE_URL!;
+  if (isNeonUrl(url)) {
+    // Neon requires WebSocket for Node.js runtime
+    const { WebSocket } = require("ws");
+    const { neonConfig } = require("@neondatabase/serverless");
+    const { PrismaNeon } = require("@prisma/adapter-neon");
+    neonConfig.webSocketConstructor = WebSocket;
+    const adapter = new PrismaNeon({ connectionString: url });
+    return new PrismaClient({ adapter });
+  }
+  return new PrismaClient();
+}
+
+const prisma = createPrismaClient();
 
 async function main() {
   await prisma.settings.upsert({

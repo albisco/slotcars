@@ -10,7 +10,7 @@ Slot car race timing dashboard for the St Patricks school fete. Kiosk-style app 
 
 - **Next.js 14** (App Router, TypeScript), **Prisma 6** ORM, **PostgreSQL** (Neon serverless, Sydney region)
 - **Tailwind CSS 3** with hand-rolled shadcn-style UI components (same patterns as sister project `teammanager`)
-- **Neon adapter:** `@prisma/adapter-neon` for HTTP-based queries (no TCP cold starts)
+- **Neon adapter:** `@prisma/adapter-neon` for HTTP-based queries (auto-detected: Neon URLs use the adapter, local Postgres uses standard TCP client)
 - **Toasts:** `sonner`, **Icons:** `lucide-react`
 
 ## Commands
@@ -25,9 +25,11 @@ Slot car race timing dashboard for the St Patricks school fete. Kiosk-style app 
 
 ## Database
 
-- `.env` has `DATABASE_URL` (Neon pooler endpoint) — **never commit this file**
+- `.env` has `DATABASE_URL` — **never commit this file**
+- Supports both Neon (serverless) and local PostgreSQL — auto-detected by URL (`neon.tech` → Neon adapter, otherwise → standard TCP)
 - Use `npx prisma db push` for schema changes (not `migrate dev` — doesn't work in non-interactive terminals)
 - Neon DB in `aws-ap-southeast-2` (Sydney), Neon branches auto-created per Vercel preview deployment
+- Local: `docker run --name slotcars-db -e POSTGRES_PASSWORD=slotcars -e POSTGRES_DB=slotcars -p 5432:5432 -d postgres:16`
 
 ## Data Model
 
@@ -42,7 +44,10 @@ Slot car race timing dashboard for the St Patricks school fete. Kiosk-style app 
 Kiosk-style app — no users, no roles, no middleware. All API routes are open. Admin page is at `/admin` (not linked from dashboard, organiser-only by obscurity).
 
 ### Shared Leaderboard Data
-A single raw SQL query in `/api/leaderboard` returns all players with their sessions and laps. The `useLeaderboard` hook (`src/lib/use-leaderboard.ts`) provides a shared client-side cache polled every 10 seconds — all components (leaderboard table, stats bar, player detail dialog) read from this single cache. No duplicate fetches.
+A single raw SQL query in `/api/leaderboard` returns all players with their sessions and laps. The `useLeaderboard` hook (`src/lib/use-leaderboard.ts`) provides a shared client-side cache — all components (leaderboard table, stats bar, player detail dialog) read from this single cache. No duplicate fetches.
+
+### Real-time Updates (SSE)
+`GET /api/events` is a Server-Sent Events endpoint. Mutation routes (lap recording, session complete/delete, admin edits) call `notify()` from `src/lib/sse.ts`, which pushes a refresh event to all connected clients. The `useLeaderboard` hook connects via `EventSource` for instant updates, with 30s polling as fallback.
 
 ### Leaderboard
 Sortable by best single lap or best average session time. Gold/silver/bronze rank badges. Click player name to see full race history in a read-only dialog.
@@ -78,10 +83,12 @@ PATCH/DEL   /api/laps/[id]            — edit / delete a lap
 GET         /api/leaderboard          — all players + sessions + laps (single raw SQL query)
 GET/PATCH   /api/settings             — get/update default laps
 POST        /api/laps/push            — external hardware push endpoint
+GET         /api/events               — SSE stream for real-time updates
 ```
 
 ### Key Lib Files
-- `src/lib/prisma.ts` — Prisma singleton with Neon adapter
+- `src/lib/prisma.ts` — Prisma singleton with auto-detection (Neon adapter or standard TCP client)
+- `src/lib/sse.ts` — in-memory pub/sub for SSE notifications (`subscribe`, `notify`)
 - `src/lib/use-leaderboard.ts` — shared leaderboard cache + polling hook + `refreshLeaderboard()`
 - `src/lib/format.ts` — `formatTime(ms)` helper (ms → "1.234s" or "1:05.432")
 - `src/lib/utils.ts` — `cn()` class merge utility

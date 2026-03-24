@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/sse";
 
 export async function PATCH(
   request: Request,
@@ -21,6 +22,7 @@ export async function PATCH(
     data: { timeMs: newTimeMs },
   });
 
+  notify();
   return NextResponse.json(lap);
 }
 
@@ -31,5 +33,6 @@ export async function DELETE(
   await prisma.lap.delete({
     where: { id: params.id },
   });
+  notify();
   return NextResponse.json({ ok: true });
 }

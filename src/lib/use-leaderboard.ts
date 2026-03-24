@@ -51,8 +51,16 @@ function startPolling() {
   if (polling) return;
   polling = true;
   fetchLeaderboard();
-  const interval = setInterval(fetchLeaderboard, 10000);
-  // Store cleanup in case we need it
+
+  // SSE for instant updates
+  if (typeof window !== "undefined" && typeof EventSource !== "undefined") {
+    const es = new EventSource("/api/events");
+    es.onmessage = () => fetchLeaderboard();
+    // EventSource auto-reconnects on error
+  }
+
+  // Fallback polling every 30s (longer interval since SSE handles real-time)
+  const interval = setInterval(fetchLeaderboard, 30000);
   const originalSize = listeners.size;
   const checkStop = setInterval(() => {
     if (listeners.size === 0 && originalSize > 0) {

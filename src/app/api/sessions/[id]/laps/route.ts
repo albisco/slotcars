@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/sse";
 
 export async function POST(
   request: Request,
@@ -38,5 +39,6 @@ export async function POST(
     },
   });
 
+  notify();
   return NextResponse.json(lap, { status: 201 });
 }

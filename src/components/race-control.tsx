@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Flag, Play } from "lucide-react";
 import { toast } from "sonner";
 import { formatTime } from "@/lib/format";
+import { refreshLeaderboard } from "@/lib/use-leaderboard";
 import { SessionSummary } from "@/components/session-summary";
 
 interface ActiveSession {
@@ -108,9 +109,11 @@ export function RaceControl() {
         });
         setCompletedSession(updated);
         setActiveSession(null);
+        refreshLeaderboard();
         toast.success("Race complete!");
       } else {
         setActiveSession(updated);
+        refreshLeaderboard();
         toast.success(`Lap ${lapNumber}: ${formatTime(timeMs)}`);
       }
       setCurrentTimeSecs("");
