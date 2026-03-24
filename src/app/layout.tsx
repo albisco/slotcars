@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "St Patricks Slot Cars",
-  description: "Race timing dashboard for the school fete",
+  description: "Race timing dashboard for the St Patricks school fete",
 };
 
 export default function RootLayout({
