@@ -3,11 +3,12 @@ import { prisma } from "@/lib/prisma";
 
 /**
  * External hardware endpoint.
- * POST { playerName, lapNumber, timeMs, lapsAllowed? }
+ * POST { playerName, lapNumber, timeMs | timeSecs, lapsAllowed? }
+ * Accepts time as either milliseconds (timeMs) or seconds (timeSecs).
  * Auto-creates player and session if needed.
  */
 export async function POST(request: Request) {
-  const { playerName, lapNumber, timeMs, lapsAllowed } = await request.json();
+  const { playerName, lapNumber, timeMs: rawTimeMs, timeSecs, lapsAllowed } = await request.json();
 
   if (!playerName || typeof playerName !== "string") {
     return NextResponse.json({ error: "playerName is required" }, { status: 400 });
@@ -15,8 +16,15 @@ export async function POST(request: Request) {
   if (typeof lapNumber !== "number" || lapNumber < 1) {
     return NextResponse.json({ error: "Valid lapNumber is required" }, { status: 400 });
   }
-  if (typeof timeMs !== "number" || timeMs <= 0) {
-    return NextResponse.json({ error: "Valid timeMs is required" }, { status: 400 });
+
+  // Accept either timeMs or timeSecs
+  let timeMs: number;
+  if (typeof timeSecs === "number" && timeSecs > 0) {
+    timeMs = Math.round(timeSecs * 1000);
+  } else if (typeof rawTimeMs === "number" && rawTimeMs > 0) {
+    timeMs = rawTimeMs;
+  } else {
+    return NextResponse.json({ error: "Valid timeMs or timeSecs is required" }, { status: 400 });
   }
 
   // Find or create player

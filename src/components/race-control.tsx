@@ -22,7 +22,7 @@ export function RaceControl() {
   const [lapsAllowed, setLapsAllowed] = useState(3);
   const [defaultLaps, setDefaultLaps] = useState(3);
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
-  const [currentTimeMs, setCurrentTimeMs] = useState("");
+  const [currentTimeSecs, setCurrentTimeSecs] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [completedSession, setCompletedSession] = useState<ActiveSession | null>(null);
 
@@ -74,11 +74,12 @@ export function RaceControl() {
 
   async function recordLap() {
     if (!activeSession) return;
-    const timeMs = parseInt(currentTimeMs);
-    if (isNaN(timeMs) || timeMs <= 0) {
-      toast.error("Enter a valid time in milliseconds");
+    const timeSecs = parseFloat(currentTimeSecs);
+    if (isNaN(timeSecs) || timeSecs <= 0) {
+      toast.error("Enter a valid time in seconds (e.g. 5.423)");
       return;
     }
+    const timeMs = Math.round(timeSecs * 1000);
 
     setSubmitting(true);
     try {
@@ -112,7 +113,7 @@ export function RaceControl() {
         setActiveSession(updated);
         toast.success(`Lap ${lapNumber}: ${formatTime(timeMs)}`);
       }
-      setCurrentTimeMs("");
+      setCurrentTimeSecs("");
     } catch {
       toast.error("Failed to record lap");
     } finally {
@@ -120,11 +121,26 @@ export function RaceControl() {
     }
   }
 
+  async function cancelRace() {
+    if (activeSession) {
+      try {
+        await fetch(`/api/sessions/${activeSession.id}`, { method: "DELETE" });
+      } catch {
+        // best-effort cleanup
+      }
+    }
+    setActiveSession(null);
+    setCompletedSession(null);
+    setPlayerName("");
+    setCurrentTimeSecs("");
+    setLapsAllowed(defaultLaps);
+  }
+
   function newRace() {
     setActiveSession(null);
     setCompletedSession(null);
     setPlayerName("");
-    setCurrentTimeMs("");
+    setCurrentTimeSecs("");
     setLapsAllowed(defaultLaps);
   }
 
@@ -161,14 +177,15 @@ export function RaceControl() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="lapTime">Lap {nextLap} Time (ms)</Label>
+            <Label htmlFor="lapTime">Lap {nextLap} Time (seconds)</Label>
             <div className="flex gap-2">
               <Input
                 id="lapTime"
                 type="number"
-                placeholder="e.g. 4523"
-                value={currentTimeMs}
-                onChange={(e) => setCurrentTimeMs(e.target.value)}
+                step="0.001"
+                placeholder="e.g. 5.423"
+                value={currentTimeSecs}
+                onChange={(e) => setCurrentTimeSecs(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && recordLap()}
               />
               <Button onClick={recordLap} disabled={submitting}>
@@ -177,7 +194,7 @@ export function RaceControl() {
             </div>
           </div>
 
-          <Button variant="outline" onClick={newRace} className="w-full">
+          <Button variant="destructive" onClick={cancelRace} className="w-full">
             Cancel Race
           </Button>
         </CardContent>

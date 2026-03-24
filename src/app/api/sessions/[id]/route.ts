@@ -14,3 +14,13 @@ export async function PATCH(
   });
   return NextResponse.json(session);
 }
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: { id: string } }
+) {
+  await prisma.raceSession.delete({
+    where: { id: params.id },
+  });
+  return NextResponse.json({ ok: true });
+}
