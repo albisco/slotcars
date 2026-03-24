@@ -63,6 +63,11 @@ function startPolling() {
   }, 1000);
 }
 
+/** Force an immediate refresh of the leaderboard data */
+export function refreshLeaderboard() {
+  return fetchLeaderboard();
+}
+
 export function useLeaderboard() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>(cachedData);
 

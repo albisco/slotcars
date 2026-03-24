@@ -55,10 +55,10 @@ export function PlayerDetail({ playerId, onClose }: PlayerDetailProps) {
                   </div>
                   <div className="space-y-1">
                     {session.laps.map((lap) => (
-                      <div key={lap.lapNumber} className="flex justify-between text-sm">
+                      <div key={lap.id} className="flex justify-between text-sm">
                         <span className="flex items-center gap-2">
                           Lap {lap.lapNumber}
-                          {bestLap && lap.lapNumber === bestLap.lapNumber && (
+                          {bestLap && lap.id === bestLap.id && (
                             <Badge variant="default" className="text-xs py-0">Best</Badge>
                           )}
                         </span>
