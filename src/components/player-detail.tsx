@@ -64,18 +64,18 @@ export function PlayerDetail({ playerId, onClose }: PlayerDetailProps) {
         </DialogHeader>
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading...</p>
-        ) : player && player.sessions.length === 0 ? (
+        ) : player && player.sessions.filter((s) => s.laps.length > 0).length === 0 ? (
           <p className="text-sm text-muted-foreground">No races yet.</p>
         ) : (
           <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-            {player?.sessions.map((session, idx) => {
+            {player?.sessions.filter((s) => s.laps.length > 0).map((session, idx, filtered) => {
               const bestLap = getBestLap(session.laps);
               const avgTime = getAvgTime(session.laps);
               return (
                 <div key={session.id} className="rounded-lg border p-3 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">
-                      Race {player.sessions.length - idx}
+                      Race {filtered.length - idx}
                     </span>
                     <div className="flex items-center gap-2">
                       {session.completed ? (

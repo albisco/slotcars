@@ -121,6 +121,21 @@ export function RaceControl() {
     }
   }
 
+  async function cancelRace() {
+    if (activeSession) {
+      try {
+        await fetch(`/api/sessions/${activeSession.id}`, { method: "DELETE" });
+      } catch {
+        // best-effort cleanup
+      }
+    }
+    setActiveSession(null);
+    setCompletedSession(null);
+    setPlayerName("");
+    setCurrentTimeSecs("");
+    setLapsAllowed(defaultLaps);
+  }
+
   function newRace() {
     setActiveSession(null);
     setCompletedSession(null);
@@ -179,7 +194,7 @@ export function RaceControl() {
             </div>
           </div>
 
-          <Button variant="outline" onClick={newRace} className="w-full">
+          <Button variant="destructive" onClick={cancelRace} className="w-full">
             Cancel Race
           </Button>
         </CardContent>
