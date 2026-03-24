@@ -80,7 +80,15 @@ export function Leaderboard() {
                   <TableRow key={entry.playerId}>
                     <TableCell>
                       {entry.rank <= 3 ? (
-                        <Badge variant={entry.rank === 1 ? "default" : "secondary"}>
+                        <Badge
+                          className={
+                            entry.rank === 1
+                              ? "bg-yellow-500 text-white border-yellow-500 hover:bg-yellow-600"
+                              : entry.rank === 2
+                              ? "bg-gray-400 text-white border-gray-400 hover:bg-gray-500"
+                              : "bg-amber-700 text-white border-amber-700 hover:bg-amber-800"
+                          }
+                        >
                           {entry.rank}
                         </Badge>
                       ) : (
