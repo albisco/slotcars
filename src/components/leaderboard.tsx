@@ -1,46 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Trophy } from "lucide-react";
 import { formatTime } from "@/lib/format";
+import { useLeaderboard } from "@/lib/use-leaderboard";
 import { PlayerDetail } from "@/components/player-detail";
 
-export interface LeaderboardEntry {
-  rank: number;
-  playerId: string;
-  playerName: string;
-  bestLapMs: number;
-  bestAvgMs: number;
-  sessionCount: number;
-}
-
 export function Leaderboard() {
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const entries = useLeaderboard();
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
-
-  async function fetchLeaderboard() {
-    try {
-      const res = await fetch("/api/leaderboard");
-      if (res.ok) {
-        const data = await res.json();
-        setEntries(data);
-      }
-    } catch {
-      // silently retry on next poll
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchLeaderboard();
-    const interval = setInterval(fetchLeaderboard, 5000);
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <>
@@ -52,9 +23,7 @@ export function Leaderboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <p className="text-muted-foreground text-sm">Loading...</p>
-          ) : entries.length === 0 ? (
+          {entries.length === 0 ? (
             <p className="text-muted-foreground text-sm">No races yet. Start a race to see the leaderboard!</p>
           ) : (
             <Table>

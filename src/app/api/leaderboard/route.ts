@@ -3,55 +3,45 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+interface LeaderboardRow {
+  player_id: string;
+  player_name: string;
+  best_lap_ms: bigint;
+  best_avg_ms: number | null;
+  session_count: bigint;
+}
+
 export async function GET() {
-  const players = await prisma.player.findMany({
-    include: {
-      sessions: {
-        include: { laps: true },
-      },
-    },
-  });
+  const rows = await prisma.$queryRaw<LeaderboardRow[]>`
+    SELECT
+      p.id AS player_id,
+      p.name AS player_name,
+      MIN(l."timeMs") AS best_lap_ms,
+      (
+        SELECT ROUND(AVG(l2."timeMs"))
+        FROM "RaceSession" s2
+        JOIN "Lap" l2 ON l2."sessionId" = s2.id
+        WHERE s2."playerId" = p.id AND s2.completed = true
+        GROUP BY s2.id
+        ORDER BY AVG(l2."timeMs") ASC
+        LIMIT 1
+      ) AS best_avg_ms,
+      COUNT(DISTINCT s.id) AS session_count
+    FROM "Player" p
+    JOIN "RaceSession" s ON s."playerId" = p.id
+    JOIN "Lap" l ON l."sessionId" = s.id
+    GROUP BY p.id, p.name
+    ORDER BY best_lap_ms ASC
+  `;
 
-  const leaderboard = players
-    .map((player) => {
-      const allLaps = player.sessions.flatMap((s) => s.laps);
-      if (allLaps.length === 0) return null;
-
-      const bestLap = allLaps.reduce((best, lap) =>
-        lap.timeMs < best.timeMs ? lap : best
-      );
-
-      // Best average: lowest avg lap time across completed sessions
-      const completedSessions = player.sessions.filter(
-        (s) => s.completed && s.laps.length > 0
-      );
-      let bestAvgMs = 0;
-      if (completedSessions.length > 0) {
-        bestAvgMs = Math.round(
-          Math.min(
-            ...completedSessions.map(
-              (s) => s.laps.reduce((sum, l) => sum + l.timeMs, 0) / s.laps.length
-            )
-          )
-        );
-      }
-
-      const sessionsWithLaps = player.sessions.filter((s) => s.laps.length > 0);
-
-      return {
-        playerId: player.id,
-        playerName: player.name,
-        bestLapMs: bestLap.timeMs,
-        bestAvgMs,
-        sessionCount: sessionsWithLaps.length,
-      };
-    })
-    .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
-    .sort((a, b) => a.bestLapMs - b.bestLapMs)
-    .map((entry, index) => ({
-      ...entry,
-      rank: index + 1,
-    }));
+  const leaderboard = rows.map((row, index) => ({
+    rank: index + 1,
+    playerId: row.player_id,
+    playerName: row.player_name,
+    bestLapMs: Number(row.best_lap_ms),
+    bestAvgMs: row.best_avg_ms ? Math.round(Number(row.best_avg_ms)) : 0,
+    sessionCount: Number(row.session_count),
+  }));
 
   return NextResponse.json(leaderboard);
 }

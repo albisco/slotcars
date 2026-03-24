@@ -1,29 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Trophy, Timer, Zap } from "lucide-react";
 import { formatTime } from "@/lib/format";
-import type { LeaderboardEntry } from "@/components/leaderboard";
+import { useLeaderboard } from "@/lib/use-leaderboard";
 
 export function StatsBar() {
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-
-  useEffect(() => {
-    async function fetch_data() {
-      try {
-        const res = await fetch("/api/leaderboard");
-        if (res.ok) setEntries(await res.json());
-      } catch {}
-    }
-    fetch_data();
-    const interval = setInterval(fetch_data, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  const entries = useLeaderboard();
 
   const fastestLap = entries.length > 0 ? entries[0] : null;
 
-  // Best average: player with lowest bestAvgMs (excluding 0 = no completed sessions)
   const withAvg = entries.filter((e) => e.bestAvgMs > 0);
   const bestAvg = withAvg.length > 0
     ? withAvg.reduce((best, e) => (e.bestAvgMs < best.bestAvgMs ? e : best))
