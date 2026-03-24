@@ -6,17 +6,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Trophy } from "lucide-react";
 import { formatTime } from "@/lib/format";
+import { PlayerDetail } from "@/components/player-detail";
 
-interface LeaderboardEntry {
+export interface LeaderboardEntry {
   rank: number;
+  playerId: string;
   playerName: string;
   bestLapMs: number;
+  bestAvgMs: number;
   sessionCount: number;
 }
 
 export function Leaderboard() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
 
   async function fetchLeaderboard() {
     try {
@@ -39,49 +43,62 @@ export function Leaderboard() {
   }, []);
 
   return (
-    <Card className="h-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Trophy className="h-6 w-6" />
-          Leaderboard
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <p className="text-muted-foreground text-sm">Loading...</p>
-        ) : entries.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No races yet. Start a race to see the leaderboard!</p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-16">#</TableHead>
-                <TableHead>Player</TableHead>
-                <TableHead className="text-right">Best Lap</TableHead>
-                <TableHead className="text-right">Races</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {entries.map((entry) => (
-                <TableRow key={entry.playerName}>
-                  <TableCell>
-                    {entry.rank <= 3 ? (
-                      <Badge variant={entry.rank === 1 ? "default" : "secondary"}>
-                        {entry.rank}
-                      </Badge>
-                    ) : (
-                      entry.rank
-                    )}
-                  </TableCell>
-                  <TableCell className="font-medium">{entry.playerName}</TableCell>
-                  <TableCell className="text-right font-mono">{formatTime(entry.bestLapMs)}</TableCell>
-                  <TableCell className="text-right">{entry.sessionCount}</TableCell>
+    <>
+      <Card className="h-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-6 w-6" />
+            Leaderboard
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <p className="text-muted-foreground text-sm">Loading...</p>
+          ) : entries.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No races yet. Start a race to see the leaderboard!</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-16">#</TableHead>
+                  <TableHead>Player</TableHead>
+                  <TableHead className="text-right">Best Lap</TableHead>
+                  <TableHead className="text-right">Races</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+              </TableHeader>
+              <TableBody>
+                {entries.map((entry) => (
+                  <TableRow key={entry.playerId}>
+                    <TableCell>
+                      {entry.rank <= 3 ? (
+                        <Badge variant={entry.rank === 1 ? "default" : "secondary"}>
+                          {entry.rank}
+                        </Badge>
+                      ) : (
+                        entry.rank
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <button
+                        className="font-medium text-left hover:underline hover:text-primary"
+                        onClick={() => setSelectedPlayerId(entry.playerId)}
+                      >
+                        {entry.playerName}
+                      </button>
+                    </TableCell>
+                    <TableCell className="text-right font-mono">{formatTime(entry.bestLapMs)}</TableCell>
+                    <TableCell className="text-right">{entry.sessionCount}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+      <PlayerDetail
+        playerId={selectedPlayerId}
+        onClose={() => setSelectedPlayerId(null)}
+      />
+    </>
   );
 }

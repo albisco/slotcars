@@ -86,6 +86,7 @@ Single-page dashboard (`/`) with two-panel layout (side by side on desktop, stac
 
 - UI components in `src/components/ui/` — Tailwind v3, no radix dependencies, using CVA for variants
 - API routes return `NextResponse.json()`, validate input at the top of each handler
-- Times always stored and transmitted as integer milliseconds
+- Times stored in DB as integer milliseconds; UI accepts seconds (e.g. `5.423`), converted to ms on submit
+- Hardware push API (`/api/laps/push`) accepts either `timeMs` (int ms) or `timeSecs` (decimal seconds)
 - Player name matching is case-insensitive (Prisma `mode: "insensitive"`)
 - `@/*` path alias maps to `./src/*`

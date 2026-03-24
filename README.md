@@ -47,7 +47,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ### Race Flow
 
 1. Enter a player name and select number of laps (3 or 5)
-2. Enter each lap time in milliseconds
+2. Enter each lap time in seconds (e.g. `5.423`)
 3. After the final lap, a summary shows the best lap highlighted
 4. Click "Next Player" to start the next race
 
@@ -57,12 +57,12 @@ Ranks all players by their best single lap time. Auto-refreshes every 5 seconds.
 
 ### External Hardware API
 
-An external timing system can push lap results directly:
+An external timing system can push lap results directly. Accepts either `timeSecs` (seconds) or `timeMs` (milliseconds):
 
 ```bash
 curl -X POST http://localhost:3000/api/laps/push \
   -H "Content-Type: application/json" \
-  -d '{"playerName": "Alice", "lapNumber": 1, "timeMs": 4523}'
+  -d '{"playerName": "Alice", "lapNumber": 1, "timeSecs": 4.523}'
 ```
 
 This auto-creates the player and session if they don't exist.

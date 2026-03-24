@@ -1,5 +1,6 @@
 import { Leaderboard } from "@/components/leaderboard";
 import { RaceControl } from "@/components/race-control";
+import { StatsBar } from "@/components/stats-bar";
 import { Settings } from "lucide-react";
 import Link from "next/link";
 
@@ -19,6 +20,7 @@ export default function Home() {
         </div>
       </header>
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
+        <StatsBar />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
           <Leaderboard />
           <RaceControl />

@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  // Get all players with their laps
   const players = await prisma.player.findMany({
     include: {
       sessions: {
@@ -13,7 +12,6 @@ export async function GET() {
     },
   });
 
-  // Calculate best lap per player
   const leaderboard = players
     .map((player) => {
       const allLaps = player.sessions.flatMap((s) => s.laps);
@@ -23,9 +21,26 @@ export async function GET() {
         lap.timeMs < best.timeMs ? lap : best
       );
 
+      // Best average: lowest avg lap time across completed sessions
+      const completedSessions = player.sessions.filter(
+        (s) => s.completed && s.laps.length > 0
+      );
+      let bestAvgMs = 0;
+      if (completedSessions.length > 0) {
+        bestAvgMs = Math.round(
+          Math.min(
+            ...completedSessions.map(
+              (s) => s.laps.reduce((sum, l) => sum + l.timeMs, 0) / s.laps.length
+            )
+          )
+        );
+      }
+
       return {
+        playerId: player.id,
         playerName: player.name,
         bestLapMs: bestLap.timeMs,
+        bestAvgMs,
         sessionCount: player.sessions.length,
       };
     })
