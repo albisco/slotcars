@@ -1,28 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { formatTime } from "@/lib/format";
-
-interface Lap {
-  lapNumber: number;
-  timeMs: number;
-}
-
-interface Session {
-  id: string;
-  lapsAllowed: number;
-  completed: boolean;
-  createdAt: string;
-  laps: Lap[];
-}
-
-interface PlayerData {
-  id: string;
-  name: string;
-  sessions: Session[];
-}
+import { useLeaderboard } from "@/lib/use-leaderboard";
+import type { LapEntry } from "@/lib/use-leaderboard";
 
 interface PlayerDetailProps {
   playerId: string | null;
@@ -30,28 +12,16 @@ interface PlayerDetailProps {
 }
 
 export function PlayerDetail({ playerId, onClose }: PlayerDetailProps) {
-  const [player, setPlayer] = useState<PlayerData | null>(null);
-  const [loading, setLoading] = useState(false);
+  const entries = useLeaderboard();
+  const player = playerId ? entries.find((e) => e.playerId === playerId) : null;
+  const sessions = player?.sessions.filter((s) => s.laps.length > 0) ?? [];
 
-  useEffect(() => {
-    if (!playerId) {
-      setPlayer(null);
-      return;
-    }
-    setLoading(true);
-    fetch(`/api/players/${playerId}`)
-      .then((res) => res.json())
-      .then((data) => setPlayer(data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [playerId]);
-
-  function getBestLap(laps: Lap[]): Lap | null {
+  function getBestLap(laps: LapEntry[]): LapEntry | null {
     if (laps.length === 0) return null;
     return laps.reduce((best, lap) => (lap.timeMs < best.timeMs ? lap : best));
   }
 
-  function getAvgTime(laps: Lap[]): number {
+  function getAvgTime(laps: LapEntry[]): number {
     if (laps.length === 0) return 0;
     return Math.round(laps.reduce((sum, l) => sum + l.timeMs, 0) / laps.length);
   }
@@ -60,22 +30,20 @@ export function PlayerDetail({ playerId, onClose }: PlayerDetailProps) {
     <Dialog open={!!playerId} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{player?.name ?? "Player"} — Race History</DialogTitle>
+          <DialogTitle>{player?.playerName ?? "Player"} — Race History</DialogTitle>
         </DialogHeader>
-        {loading ? (
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        ) : player && player.sessions.filter((s) => s.laps.length > 0).length === 0 ? (
+        {sessions.length === 0 ? (
           <p className="text-sm text-muted-foreground">No races yet.</p>
         ) : (
           <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-            {player?.sessions.filter((s) => s.laps.length > 0).map((session, idx, filtered) => {
+            {sessions.map((session, idx) => {
               const bestLap = getBestLap(session.laps);
               const avgTime = getAvgTime(session.laps);
               return (
                 <div key={session.id} className="rounded-lg border p-3 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">
-                      Race {filtered.length - idx}
+                      Race {sessions.length - idx}
                     </span>
                     <div className="flex items-center gap-2">
                       {session.completed ? (

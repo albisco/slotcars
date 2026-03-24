@@ -2,6 +2,20 @@
 
 import { useEffect, useState, useCallback } from "react";
 
+export interface LapEntry {
+  id: string;
+  lapNumber: number;
+  timeMs: number;
+}
+
+export interface SessionEntry {
+  id: string;
+  lapsAllowed: number;
+  completed: boolean;
+  createdAt: string;
+  laps: LapEntry[];
+}
+
 export interface LeaderboardEntry {
   rank: number;
   playerId: string;
@@ -9,6 +23,7 @@ export interface LeaderboardEntry {
   bestLapMs: number;
   bestAvgMs: number;
   sessionCount: number;
+  sessions: SessionEntry[];
 }
 
 // Shared cache so multiple components don't duplicate fetches
