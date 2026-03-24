@@ -1,0 +1,42 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Player {
+  id        String        @id @default(cuid())
+  name      String
+  createdAt DateTime      @default(now())
+  sessions  RaceSession[]
+}
+
+model RaceSession {
+  id          String   @id @default(cuid())
+  playerId    String
+  player      Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  lapsAllowed Int      @default(3)
+  completed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  laps        Lap[]
+}
+
+model Lap {
+  id        String      @id @default(cuid())
+  sessionId String
+  session   RaceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  lapNumber Int
+  timeMs    Int
+  createdAt DateTime    @default(now())
+
+  @@unique([sessionId, lapNumber])
+}
+
+model Settings {
+  id          String @id @default("default")
+  defaultLaps Int    @default(3)
+}
