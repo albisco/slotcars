@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/sse";
 
 /**
  * External hardware endpoint.
@@ -71,6 +72,7 @@ export async function POST(request: Request) {
     });
   }
 
+  notify();
   return NextResponse.json({
     player: { id: player.id, name: player.name },
     sessionId: session.id,

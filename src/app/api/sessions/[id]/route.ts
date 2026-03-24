@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/sse";
 
 export async function PATCH(
   request: Request,
@@ -12,6 +13,7 @@ export async function PATCH(
     data: { completed },
     include: { player: true, laps: { orderBy: { lapNumber: "asc" } } },
   });
+  notify();
   return NextResponse.json(session);
 }
 
@@ -22,5 +24,6 @@ export async function DELETE(
   await prisma.raceSession.delete({
     where: { id: params.id },
   });
+  notify();
   return NextResponse.json({ ok: true });
 }

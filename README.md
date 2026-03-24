@@ -13,18 +13,18 @@ Race timing dashboard for the St Patricks school fete. A kiosk-style app where a
 ### Prerequisites
 
 - Node.js 18+
-- A [Neon](https://neon.tech) PostgreSQL database
+- PostgreSQL — either [Neon](https://neon.tech) (serverless) or a local instance
 
-### Setup
+### Setup with Neon
 
 ```bash
 npm install
 ```
 
-Create a `.env` file:
+Create a `.env` file with your Neon connection string:
 
 ```
-DATABASE_URL="postgresql://..."
+DATABASE_URL="postgresql://...@...neon.tech/..."
 ```
 
 Push the schema and seed the database:
@@ -41,6 +41,37 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+### Running Locally (without Neon)
+
+For running at the fete without internet, use a local PostgreSQL instance:
+
+1. Start PostgreSQL via Docker:
+
+```bash
+docker run --name slotcars-db -e POSTGRES_PASSWORD=slotcars -e POSTGRES_DB=slotcars -p 5432:5432 -d postgres:16
+```
+
+2. Create `.env` with the local connection string:
+
+```
+DATABASE_URL="postgresql://postgres:slotcars@localhost:5432/slotcars"
+```
+
+3. Push schema and seed:
+
+```bash
+npx prisma db push
+npx prisma db seed
+```
+
+4. Start the dev server:
+
+```bash
+npm run dev
+```
+
+The app auto-detects whether the `DATABASE_URL` points to Neon or a local Postgres instance and uses the appropriate driver.
 
 ## How It Works
 
@@ -92,6 +123,7 @@ This auto-creates the player and session if they don't exist.
 | GET | `/api/leaderboard` | All players + sessions + laps |
 | GET/PATCH | `/api/settings` | Get/update default laps |
 | POST | `/api/laps/push` | External hardware push endpoint |
+| GET | `/api/events` | SSE stream for real-time updates |
 
 ## Scripts
 
