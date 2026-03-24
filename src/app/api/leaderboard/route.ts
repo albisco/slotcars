@@ -36,12 +36,14 @@ export async function GET() {
         );
       }
 
+      const sessionsWithLaps = player.sessions.filter((s) => s.laps.length > 0);
+
       return {
         playerId: player.id,
         playerName: player.name,
         bestLapMs: bestLap.timeMs,
         bestAvgMs,
-        sessionCount: player.sessions.length,
+        sessionCount: sessionsWithLaps.length,
       };
     })
     .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
